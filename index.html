@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AvtoGalaneria | Shop</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: 'Segoe UI', sans-serif; background-color: #f8f9fa; }
+
+        /* HEADER */
+        header {
+            background-color: #1a1a1a; color: white; padding: 15px 5%;
+            display: flex; justify-content: space-between; align-items: center;
+            position: sticky; top: 0; z-index: 1000;
+        }
+        .logo { font-size: 24px; font-weight: bold; color: #ffcc00; text-decoration: none; }
+        
+        nav { display: flex; align-items: center; gap: 20px; }
+        nav a { color: white; text-decoration: none; font-size: 14px; transition: 0.3s; }
+        nav a:hover { color: #ffcc00; }
+
+        .cart-trigger { 
+            position: relative; cursor: pointer; display: flex; align-items: center; 
+            gap: 10px; background: #333; padding: 8px 15px; border-radius: 25px; 
+            border: 1px solid #ffcc00; transition: 0.3s;
+        }
+        .cart-trigger:hover { background: #444; }
+        .cart-count { background: #d9534f; color: white; font-size: 12px; padding: 2px 7px; border-radius: 50%; position: absolute; top: -5px; right: -5px; }
+
+        /* PRODUCT AREA */
+        .container { display: flex; justify-content: center; padding: 50px 20px; }
+        .product-card { background: white; padding: 25px; border-radius: 12px; max-width: 400px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); text-align: center; }
+        img { max-width: 100%; border-radius: 8px; margin-bottom: 15px; }
+        .price { font-size: 28px; font-weight: bold; color: #d9534f; margin: 10px 0; }
+        .add-btn { background: #0056b3; color: white; border: none; padding: 15px; border-radius: 6px; cursor: pointer; width: 100%; font-weight: bold; font-size: 16px; transition: 0.2s; }
+        .add-btn:hover { background: #003d7a; }
+
+        /* KORPA MODAL */
+        #cartModal { 
+            display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
+            background: rgba(0,0,0,0.8); z-index: 9999; justify-content: center; align-items: center; 
+        }
+        .modal-content { background: white; width: 95%; max-width: 500px; border-radius: 15px; padding: 30px; position: relative; max-height: 80vh; overflow-y: auto; }
+        .close-btn { position: absolute; top: 15px; right: 20px; font-size: 30px; cursor: pointer; color: #333; }
+        
+        .cart-item { display: flex; justify-content: space-between; padding: 15px 0; border-bottom: 1px solid #eee; }
+        .total-section { font-size: 22px; font-weight: bold; margin: 20px 0; text-align: right; border-top: 2px solid #333; padding-top: 10px; }
+        
+        /* CHECKOUT FORM */
+        #checkoutSection { display: none; margin-top: 20px; padding-top: 20px; border-top: 2px dashed #ccc; }
+        .checkout-form input { width: 100%; padding: 12px; margin: 8px 0; border: 1px solid #ddd; border-radius: 6px; }
+        .confirm-btn { background: #28a745; color: white; border: none; padding: 15px; width: 100%; border-radius: 6px; cursor: pointer; font-size: 18px; margin-top: 10px; }
+    </style>
+</head>
+<body>
+
+    <header>
+        <a href="#" class="logo">AvtoGalaneria</a>
+        <nav>
+            <a href="#"><i class="fas fa-bolt"></i> Electricni Trotineti</a>
+            <a href="#"><i class="fas fa-bicycle"></i> Velosipedi</a>
+            <div class="cart-trigger" onclick="openCart()">
+                <i class="fas fa-shopping-cart"></i>
+                <span>Korpa</span>
+                <span id="cart-count" class="cart-count">0</span>
+            </div>
+        </nav>
+    </header>
+
+    <div class="container">
+        <div class="product-card">
+            <img src="SET-Angel-Eyes-CCFL-BMW-E30-E32-E34-PREMIUM.jpg.webp" alt="BMW Angel Eyes">
+            <h2>BMW Angel Eyes CCFL</h2>
+            <div class="price">1800 Den</div>
+            <div style="margin-bottom: 15px;">
+                <label>Qty:</label>
+                <input type="number" id="quantity" value="1" min="1" style="width: 60px; padding: 5px; border-radius: 4px; border: 1px solid #ccc;">
+            </div>
+            <button class="add-btn" onclick="addToCart()">Add to Cart</button>
+        </div>
+    </div>
+
+    <div id="cartModal">
+        <div class="modal-content">
+            <span class="close-btn" onclick="closeCart()">&times;</span>
+            <h2 style="margin-bottom: 20px; border-bottom: 2px solid #ffcc00; padding-bottom: 10px;">Vashata Korpa</h2>
+            
+            <div id="cart-items-list">
+                <p style="text-align:center; color:#888;">Your cart is empty.</p>
+            </div>
+
+            <div class="total-section" id="total-display">Total: 0 Den</div>
+            
+            <button class="add-btn" id="proceed-btn" onclick="showCheckout()" style="display:none;">Proceed to Checkout</button>
+
+            <div id="checkoutSection" class="checkout-form">
+                <h3>Delivery Details</h3>
+                <input type="text" id="custName" placeholder="Your Full Name">
+                <input type="text" id="custAddress" placeholder="Shipping Address">
+                <input type="text" id="custPhone" placeholder="Phone Number">
+                <button class="confirm-btn" onclick="finishOrder()">Confirm Order</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let cart = [];
+        const PRICE = 1800;
+
+        function addToCart() {
+            const qty = parseInt(document.getElementById('quantity').value);
+            if(qty < 1) return;
+            
+            const newItem = { name: "BMW Angel Eyes CCFL", qty: qty, subtotal: qty * PRICE };
+            cart.push(newItem);
+            updateCartDisplay();
+            alert("Success! Item added to Korpa.");
+        }
+
+        function updateCartDisplay() {
+            const listDiv = document.getElementById('cart-items-list');
+            const countLabel = document.getElementById('cart-count');
+            const totalLabel = document.getElementById('total-display');
+            const proceedBtn = document.getElementById('proceed-btn');
+
+            let totalQty = 0;
+            let grandTotal = 0;
+            listDiv.innerHTML = "";
+
+            if (cart.length === 0) {
+                listDiv.innerHTML = '<p style="text-align:center; color:#888;">Your cart is empty.</p>';
+            } else {
+                cart.forEach(item => {
+                    totalQty += item.qty;
+                    grandTotal += item.subtotal;
+                    listDiv.innerHTML += `
+                        <div class="cart-item">
+                            <span><strong>${item.name}</strong> (x${item.qty})</span>
+                            <span>${item.subtotal} Den</span>
+                        </div>`;
+                });
+            }
+
+            countLabel.innerText = totalQty;
+            totalLabel.innerText = `Total: ${grandTotal} Den`;
+            proceedBtn.style.display = cart.length > 0 ? "block" : "none";
+        }
+
+        function openCart() {
+            document.getElementById('cartModal').style.display = "flex";
+        }
+
+        function closeCart() {
+            document.getElementById('cartModal').style.display = "none";
+            document.getElementById('checkoutSection').style.display = "none";
+        }
+
+        function showCheckout() {
+            document.getElementById('checkoutSection').style.display = "block";
+            document.getElementById('proceed-btn').style.display = "none";
+        }
+
+        function finishOrder() {
+            const name = document.getElementById('custName').value;
+            const address = document.getElementById('custAddress').value;
+            const phone = document.getElementById('custPhone').value;
+
+            if(!name || !address || !phone) { 
+                alert("Please fill in all delivery details!"); 
+                return; 
+            }
+            
+            alert("Thank you " + name + "! Your order has been placed. We will ship to: " + address);
+            cart = [];
+            updateCartDisplay();
+            closeCart();
+        }
+    </script>
+</body>
+</html>
